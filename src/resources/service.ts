@@ -11,6 +11,7 @@ export class Service extends Resource<IServiceOptions> {
     public readonly ports: number[];
     private readonly cluster: Cluster;
     public readonly protocols: Protocol[];
+    private logGroupDeletePolicy: string;
 
     public constructor(stage: string, options: IServiceOptions, cluster: Cluster, tags?: object) {
         // camelcase a default name
@@ -31,7 +32,8 @@ export class Service extends Resource<IServiceOptions> {
             console.debug(`Serverless: fargate-plugin: Using port ${this.ports[index]} for service ${options.name} on cluster ${cluster.getName(NamePostFix.CLUSTER)} - protocol ${serviceProtocolOptions.protocol}`);
             return new Protocol(cluster, this, stage, serviceProtocolOptions, this.ports[index], tags);
         }));
-        this.logGroupName = `serverless-fargate-${options.name}-${stage}-${uuid()}`;
+        this.logGroupName = options.logGroupName ? options.logGroupName : `serverless-fargate-${options.name}-${stage}-${uuid()}`;
+        this.logGroupDeletePolicy = options.logGroupName ? "RETAIN" : "DELETE";
     }
 
     public generate(): any {
@@ -96,7 +98,7 @@ export class Service extends Resource<IServiceOptions> {
                             {
                                 "ContainerName": this.getName(NamePostFix.CONTAINER_NAME),
                                 "ContainerPort": this.ports[0],
-                                "TargetGroupArn": {
+                                "TargetGroupArn": { 
                                     "Ref": this.getName(NamePostFix.TARGET_GROUP)
                                 }
                             }
@@ -242,7 +244,7 @@ export class Service extends Resource<IServiceOptions> {
         return {
             [this.getName(NamePostFix.LOG_GROUP)]: {
                 "Type": "AWS::Logs::LogGroup",
-                "DeletionPolicy": "Delete",
+                "DeletionPolicy": this.logGroupDeletePolicy,
                 "Properties": {
                     "LogGroupName": this.logGroupName,
                     "RetentionInDays": 30

@@ -60,6 +60,7 @@ export interface IServiceOptions {
     healthCheckUri?: string; // defaults to "/"
     healthCheckProtocol?: string; // defaults to "HTTP"
     healthCheckInterval?: number // in seconds, defaults to 6 seconds
+    logGroupName?: string // the name of the log group to use, useful to persist the log groups after redeployments
 }
 
 export interface IClusterOptions {
